@@ -1,16 +1,15 @@
-.PHONY: help tests
-
-help:
-	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
-
-deps: ## Install deps
+deps:
 	git submodule update --init --recursive
 	make -C contracts deps
 	go install github.com/maoueh/zap-pretty@latest
 
-anvil-deploy-eigen-contracts: ## Deploy Eigen Layer contracts and dump to json file
+anvil-deploy-eigen-contracts:
 	make -C contracts anvil-deploy-eigen-contracts
 
-anvil-start: ## Start anvil
+anvil-start:
 	make -C contracts anvil-start
 
+deploy-incredible-squaring-contracts-to-anvil-and-save-state: ## Deploy avs
+	./tests/anvil/deploy-avs-save-anvil-state.sh
+
+deploy-all-to-anvil-and-save-state: deploy-eigenlayer-contracts-to-anvil-and-save-state deploy-incredible-squaring-contracts-to-anvil-and-save-state ## deploy eigenlayer, shared avs contracts, and inc-sq contracts 
