@@ -27,7 +27,10 @@ func (agg *Aggregator) ServeOperators() error {
 	agg.logger.Info("Starting RPC server on address", "address",
 		agg.AggregatorConfig.Aggregator.ServerIpPortAddress)
 
-	err = http.ListenAndServe(agg.AggregatorConfig.Aggregator.ServerIpPortAddress, nil)
+	err = http.ListenAndServeTLS(agg.AggregatorConfig.Aggregator.ServerIpPortAddress,
+		agg.AggregatorConfig.TlsConfig.CertFile,
+		agg.AggregatorConfig.TlsConfig.KeyFile,
+		nil)
 	if err != nil {
 		return err
 	}

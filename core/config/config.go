@@ -64,6 +64,18 @@ type BlsConfigFromYaml struct {
 	} `yaml:"bls"`
 }
 
+type TlsConfig struct {
+	CertFile string
+	KeyFile  string
+}
+
+type TlsConfigFromYaml struct {
+	Tls struct {
+		CertFile string `yaml:"cert_file"`
+		KeyFile  string `yaml:"key_file"`
+	} `yaml:"tls"`
+}
+
 type AlignedLayerDeploymentConfig struct {
 	AlignedLayerServiceManagerAddr         common.Address
 	AlignedLayerRegistryCoordinatorAddr    common.Address
@@ -102,6 +114,7 @@ type AggregatorConfig struct {
 		AvsServiceManagerAddress      common.Address
 		EnableMetrics                 bool
 	}
+	TlsConfig *TlsConfig
 }
 
 type AggregatorConfigFromYaml struct {
@@ -275,6 +288,11 @@ func NewAggregatorConfig(configFilePath string) *AggregatorConfig {
 		log.Fatal("Error reading aggregator config: ", err)
 	}
 
+	tlsConfig := newTlsConfig(configFilePath)
+	if tlsConfig == nil {
+		log.Fatal("Error reading tls config: ")
+	}
+
 	return &AggregatorConfig{
 		BaseConfig:  baseConfig,
 		EcdsaConfig: ecdsaConfig,
@@ -285,6 +303,7 @@ func NewAggregatorConfig(configFilePath string) *AggregatorConfig {
 			AvsServiceManagerAddress      common.Address
 			EnableMetrics                 bool
 		}(aggregatorConfigFromYaml.Aggregator),
+		TlsConfig: tlsConfig,
 	}
 }
 
@@ -406,6 +425,31 @@ func newBlsConfig(blsConfigFilePath string) *BlsConfig {
 
 	return &BlsConfig{
 		KeyPair: blsKeyPair,
+	}
+}
+
+func newTlsConfig(tlsConfigFilePath string) *TlsConfig {
+	if _, err := os.Stat(tlsConfigFilePath); errors.Is(err, os.ErrNotExist) {
+		log.Fatal("Setup tls config file does not exist")
+	}
+
+	var tlsConfigFromYaml TlsConfigFromYaml
+	err := sdkutils.ReadYamlConfig(tlsConfigFilePath, &tlsConfigFromYaml)
+	if err != nil {
+		log.Fatal("Error reading tls config: ", err)
+	}
+
+	if tlsConfigFromYaml.Tls.CertFile == "" {
+		log.Fatal("Tls cert file is empty")
+	}
+
+	if tlsConfigFromYaml.Tls.KeyFile == "" {
+		log.Fatal("Tls key file is empty")
+	}
+
+	return &TlsConfig{
+		CertFile: tlsConfigFromYaml.Tls.CertFile,
+		KeyFile:  tlsConfigFromYaml.Tls.KeyFile,
 	}
 }
 
