@@ -1,11 +1,8 @@
 package operator
 
 import (
-	"context"
 	"crypto/tls"
 	"errors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"net/rpc"
 	"time"
 
@@ -15,7 +12,7 @@ import (
 
 // AggregatorRpcClient is the client to communicate with the aggregator via RPC
 type AggregatorRpcClient struct {
-	rpcClient            *grpc.ClientConn
+	rpcClient            *rpc.Client
 	aggregatorIpPortAddr string
 	logger               logging.Logger
 }
@@ -38,10 +35,18 @@ func NewAggregatorRpcClient(aggregatorIpPortAddr string, logger logging.Logger) 
 	}, nil
 }
 
-func newClient(aggregatorIpPortAddr string) (*grpc.ClientConn, error) {
+func newClient(aggregatorIpPortAddr string) (*rpc.Client, error) {
 	// TODO(juli): For mainnet, we should load the aggregator's certificate from a file.
-	creds := credentials.NewTLS(&tls.Config{InsecureSkipVerify: true})
-	return grpc.NewClient(aggregatorIpPortAddr, grpc.WithTransportCredentials(creds))
+	config := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+
+	conn, err := tls.Dial("tcp", aggregatorIpPortAddr, config)
+	if err != nil {
+		return nil, err
+	}
+
+	return rpc.NewClient(conn), nil
 }
 
 // SendSignedTaskResponseToAggregator is the method called by operators via RPC to send
@@ -49,7 +54,7 @@ func newClient(aggregatorIpPortAddr string) (*grpc.ClientConn, error) {
 func (c *AggregatorRpcClient) SendSignedTaskResponseToAggregator(signedTaskResponse *types.SignedTaskResponse) {
 	var reply uint8
 	for retries := 0; retries < MaxRetries; retries++ {
-		err := c.rpcClient.Invoke(context.Background(), "Aggregator.ProcessOperatorSignedTaskResponse", signedTaskResponse, &reply)
+		err := c.rpcClient.Call("Aggregator.ProcessOperatorSignedTaskResponse", signedTaskResponse, &reply)
 		if err != nil {
 			c.logger.Error("Received error from aggregator", "err", err)
 			if errors.Is(err, rpc.ErrShutdown) {
