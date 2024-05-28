@@ -130,6 +130,7 @@ batcher/client/target/release/batcher-client:
 batcher_send_sp1_task:
 	@echo "Sending SP1 fibonacci task to Batcher..."
 	@cd batcher/client/ && cargo run --release -- \
+	@cd batcher/client/ && cargo run --release -- \
 		--proving_system SP1 \
 		--proof test_files/sp1/sp1_fibonacci.proof \
 		--vm_program test_files/sp1/sp1_fibonacci-elf
@@ -142,14 +143,6 @@ batcher_send_sp1_burst_5:
 		--vm_program test_files/sp1/sp1_fibonacci-elf \
 		--repetitions 5
 
-batcher_send_plonk_bn254_task: batcher/client/target/release/batcher-client
-	@echo "Sending Groth16Bn254 1!=0 task to Batcher..."
-	@cd batcher/client/ && cargo run --release -- \
-		--proving_system GnarkPlonkBn254 \
-		--proof test_files/plonk_bn254/plonk.proof \
-		--public_input test_files/plonk_bn254/plonk_pub_input.pub \
-		--vk test_files/plonk_bn254/plonk.vk
-
 batcher_send_plonk_bls12_381_task: batcher/client/target/release/batcher-client
 	@echo "Sending Groth16 BLS12-381 1!=0 task to Batcher..."
 	@cd batcher/client/ && cargo run --release -- \
@@ -161,11 +154,19 @@ batcher_send_plonk_bls12_381_task: batcher/client/target/release/batcher-client
 
 batcher_send_groth16_bn254_task: batcher/client/target/release/batcher-client
 	@echo "Sending Groth16Bn254 1!=0 task to Batcher..."
-	@cd batcher/client/ && cargo run --release -- \
+	@cd batcher/client/ && cargo run --release --  \
 		--proving_system Groth16Bn254 \
-		--proof test_files/groth16/ineq_1_groth16.proof \
-		--public_input test_files/groth16/ineq_1_groth16.pub \
-		--vk test_files/groth16/ineq_1_groth16.vk
+		--proof test_files/groth16_bn254/ineq_1_groth16.proof \
+		--public_input test_files/groth16_bn254/ineq_1_groth16.pub \
+		--vk test_files/groth16_bn254/ineq_1_groth16.vk
+
+batcher_send_plonk_bn254_task: batcher/client/target/release/batcher-client
+	@echo "Sending PlonkBn254 1!=0 task to Batcher..."
+	@cd batcher/client/ && cargo run --release --  \
+		--proving_system GnarkPlonkBn254 \
+		--proof test_files/plonk_bn254/ineq_1_plonk.proof \
+		--public_input test_files/plonk_bn254/ineq_1_plonk.pub \
+		--vk test_files/plonk_bn254/ineq_1_plonk.vk \
 
 batcher_send_groth16_burst_5: batcher/client/target/release/batcher-client
 	@echo "Sending Groth16Bn254 1!=0 task to Batcher..."
@@ -176,14 +177,16 @@ batcher_send_groth16_burst_5: batcher/client/target/release/batcher-client
 		--vk test_files/groth16/ineq_1_groth16.vk \
 		--repetitions 5
 
-batcher_send_infinite_groth16: ./batcher/client/target/release/batcher-client ## Send a different Groth16 BN254 proof using the task sender every 3 seconds
+batcher_send_infinite_groth16_task: ./batcher/client/target/release/batcher-client ## Send a different Groth16 BN254 proof using the task sender every 3 seconds
 	@mkdir -p task_sender/test_examples/gnark_groth16_bn254_infinite_script/infinite_proofs
 	@echo "Sending a different GROTH16 BN254 proof in a loop every n seconds..."
-	@./batcher/client/send_infinite_tasks.sh 4
+	@./batcher/client/send_infinite_tasks.sh 4 Groth16
 
-batcher_send_burst_groth16: build_batcher_client
-	@echo "Sending a burst of tasks to Batcher..."
-	@./batcher/client/send_burst_tasks.sh $(BURST_SIZE)
+
+batcher_send_infinite_plonk_bn254_tasks: ./batcher/client/target/release/batcher-client ## Send a different PLONK BN254 proof using the task sender every 3 seconds
+	@mkdir -p task_sender/test_examples/gnark_plonk_bn254_infinite_script/infinite_proofs	
+	@echo "Sending a different PLONK BN254 proof in a loop every n seconds..."
+	@./batcher/client/send_infinite_tasks.sh 4 PlonkBn254
 
 __TASK_SENDERS__:
  # TODO add a default proving system
@@ -214,7 +217,6 @@ generate_plonk_bls12_381_proof: ## Run the gnark_plonk_bls12_381_script
 	@echo "Running gnark_plonk_bls12_381 script..."
 	@go run task_sender/test_examples/gnark_plonk_bls12_381_script/main.go
 
-
 send_plonk_bn254_proof: ## Send a PLONK BN254 proof using the task sender
 	@echo "Sending PLONK BN254 proof..."
 	@go run task_sender/cmd/main.go send-task \
@@ -239,6 +241,18 @@ send_plonk_bn254_proof_loop: ## Send a PLONK BN254 proof using the task sender e
 generate_plonk_bn254_proof: ## Run the gnark_plonk_bn254_script
 	@echo "Running gnark_plonk_bn254 script..."
 	@go run task_sender/test_examples/gnark_plonk_bn254_script/main.go
+
+generate_plonk_bn254_ineq_proof: ## Run the gnark_plonk_bn254_script
+	@echo "Running gnark_plonk_bn254_ineq script..."
+	@go run task_sender/test_examples/gnark_plonk_bn254_infinite_script/cmd/main.go 1
+
+send_infinite_plonk_bn254_proof: ## Send a different Groth16 BN254 proof using the task sender every 3 seconds
+	@echo "Sending a different PLONK BN254 proof in a loop every 3 seconds..."
+	@go run task_sender/cmd/main.go infinite-tasks \
+		--proving-system plonk_bn254 \
+		--config config-files/config.yaml \
+		--interval 3 \
+		2>&1 | zap-pretty
 
 send_groth16_bn254_proof: ## Send a Groth16 BN254 proof using the task sender
 	@echo "Sending GROTH16 BN254 proof..."
@@ -277,7 +291,7 @@ generate_groth16_proof: ## Run the gnark_plonk_bn254_script
 
 generate_groth16_ineq_proof: ## Run the gnark_plonk_bn254_script
 	@echo "Running gnark_groth_bn254_ineq script..."
-	@go run task_sender/test_examples/gnark_groth16_bn254_infinite_script/main.go 1
+	@go run task_sender/test_examples/gnark_groth16_bn254_infinite_script/cmd/main.go 1
 
 send_sp1_proof:
 	@go run task_sender/cmd/main.go send-task \
