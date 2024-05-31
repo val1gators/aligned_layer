@@ -388,4 +388,3 @@ Proof aggregation can also be supported by proving the verification of many of t
 ### How does it compare to the Polygon aggregation layer?
 
 Aligned Layer is just a network of decentralized verifiers renting security from Ethereum. On the other hand, the Polygon aggregation layer, in essence, is a rollup verifying multiple proofs. That is not the case for Aligned Layer, which just executes a rust binary from different verifiers directly in multiple Ethereum validators.
-
