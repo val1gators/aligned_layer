@@ -259,6 +259,7 @@ impl Batcher {
         info!("Batch Finalizer: Finalizing batch process started. Locking batch queue ...");
         let mut last_uploaded_batch_block = self.last_uploaded_batch_block.lock().await;
         info!("Batch Finalizer: Locked");
+
         let batch_verification_data: Vec<VerificationData> = finalized_batch
             .clone()
             .into_iter()
@@ -278,16 +279,17 @@ impl Batcher {
         let batch_merkle_tree: MerkleTree<VerificationCommitmentBatch> =
             MerkleTree::build(&batch_data_comm);
 
-        info!("Batch Finalizer: Calling submit batch ... {}", finalized_batch.len());
+        // update last uploaded batch block
+        *last_uploaded_batch_block = block_number;
+        drop(last_uploaded_batch_block);
+        info!("Batch Finalizer: Last uploaded batch block updated to: {}. Lock unlocked", block_number);
 
+        info!("Batch Finalizer: Calling submit batch ... {}", finalized_batch.len());
 
         self.submit_batch(&batch_bytes, &batch_merkle_tree.root)
             .await;
 
-        info!("Batch Finalizer: Submitter finished, updaiting last uploaded batch and sending responses to users ...");
-
-        // update last uploaded batch block
-        *last_uploaded_batch_block = block_number;
+        info!("Batch Finalizer: Submitter finished, updating last uploaded batch and sending responses to users ...");
 
         send_responses(finalized_batch, &batch_merkle_tree).await;
     }
