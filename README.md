@@ -58,7 +58,7 @@ The SP1 proof needs the proof file and the vm program file.
 
 ```bash
 aligned \
---proving_system <SP1|GnarkPlonkBn254|GnarkPlonkBls12_381|Groth16Bn254> \
+--proving_system <SP1|GnarkPlonkBn254|GnarkPlonkBls12_381|Groth16Bn254|Halo2KZG|Halo2IPA> \
 --proof <proof_file> \
 --vm_program <vm_program_file> \
 --conn wss://batcher.alignedlayer.com \
@@ -81,7 +81,7 @@ The GnarkPlonkBn254, GnarkPlonkBls12_381 and Groth16Bn254 proofs need the proof 
 
 ```bash
 aligned \
---proving_system <SP1|GnarkPlonkBn254|GnarkPlonkBls12_381|Groth16Bn254> \
+--proving_system <SP1|GnarkPlonkBn254|GnarkPlonkBls12_381|Groth16Bn254|Halo2KZG|Halo2IPA> \
 --proof <proof_file> \
 --public_input <public_input_file> \
 --vk <verification_key_file> \
@@ -117,6 +117,40 @@ aligned \
 --vk ./batcher/aligned/test_files/groth16/ineq_1_groth16.vk \
 --conn wss://batcher.alignedlayer.com
 ```
+#### Halo2KZG, and Halo2IPA
+
+Halo2KZG and Halo2IPA proofs require the proof file, the public input file and the parameters file.
+
+
+```bash
+aligned \
+--proving_system <SP1|GnarkPlonkBn254|GnarkPlonkBls12_381|Groth16Bn254|Halo2KZG|Halo2IPA> \
+--proof <proof_file> \
+--public_input <public_input_file> \
+--vk <verification_key_file> \
+--conn wss://batcher.alignedlayer.com \
+--proof_generator_addr [proof_generator_addr]
+
+**Examples**
+
+```bash
+aligned \
+--proving_system Halo2KZG \
+--proof ./batcher/aligned/test_files/halo2_kzg/proof.bin \
+--public_input ./batcher/aligned/test_files/halo2_kzg/pub_input.bin \
+--vk ./batcher/aligned/test_files/halo2_kzg/params.bin \
+--conn wss://batcher.alignedlayer.com
+```
+
+```bash
+aligned \
+--proving_system Halo2IPA \
+--proof ./batcher/aligned/test_files/halo2_ipa/proof.bin \
+--public_input ./batcher/aligned/test_files/halo2_ipa/pub_input.bin \
+--vk ./batcher/aligned/test_files/halo2_ipa/params.bin \
+--conn wss://batcher.alignedlayer.com
+```
+
 
 ## Local Devnet Setup
 
@@ -218,6 +252,18 @@ Send an individual Groth 16 proof:
 
 ```bash
 make batcher_send_groth16_task
+```
+
+Send an individual Halo2 KZG proof:
+
+```bash
+make batcher_send_halo2_kzg_task
+```
+
+Send an individual Halo2 IPA proof:
+
+```bash
+make batcher_send_halo2_ipa_task
 ```
 
 To send an individual test SP1 proof:
@@ -465,6 +511,18 @@ make batcher_send_infinite_groth16
 make batcher_send_burst_groth16
 ```
 
+#### Send burst of Halo2 KZG proofs
+
+```bash
+make batcher_send_burst_halo2_kzg
+```
+
+#### Send burst of Halo2 IPA proofs
+
+```bash
+make batcher_send_burst_halo2_ipa
+```
+
 #### Send specific proof
 
 To install the batcher client to send a specific proof, run:
@@ -557,6 +615,34 @@ To send different Groth 16 BN254 proofs in loop, run:
 make send_infinite_groth16_bn254_proof
 ```
 
+#### Send Halo2 KZG proof
+
+To send a single Halo2 KZG proof, run:
+
+```bash
+make send_halo2_kzg_proof
+```
+
+To send Halo2 KZG proofs in loop, run:
+
+```bash
+make send_halo2_kzg_proof_loop
+```
+
+#### Send Halo2 IPA proof
+
+To send a single Halo2 IPA proof, run:
+
+```bash
+make send_halo2_ipa_proof
+```
+
+To send Halo2 KZG proofs in loop, run:
+
+```bash
+make send_halo2_ipa_proof_loop
+```
+
 #### Send SP1 proof
 
 To send a single SP1 proof, run:
@@ -569,7 +655,7 @@ make send_sp1_proof
 
 ```bash
 go run task_sender/cmd/main.go send-task \
---proving-system <plonk_bls12_381|plonk_bn254|groth16_bn254|sp1> \
+--proving-system <plonk_bls12_381|plonk_bn254|groth16_bn254|sp1|halo2_kzg|halo2_ipa> \
 --proof <proof_file> \
 --public-input <public_input_file> \
 --verification-key <verification_key_file> \
@@ -581,8 +667,8 @@ go run task_sender/cmd/main.go send-task \
 #### Send a specific proof in loop
 
 ```bash
-go run task_sender/cmd/main.go loop-tasks \
-    --proving-system <plonk_bls12_381|plonk_bn254|groth16_bn254|sp1> \
+go run task_sender/cmd/main.go loop-tasks
+    --proving-system <plonk_bls12_381|plonk_bn254|groth16_bn254|sp1|halo2_kzg|halo2_ipa> \
     --proof <proof_file> \
     --public-input <public_input_file> \
     --verification-key <verification_key_file> \
@@ -846,6 +932,47 @@ cargo run --release -- \
 --vm_program <vm_program_path> \
 --conn wss://batcher.alignedlayer.com \
 --proof_generator_addr [proof_generator_addr]
+```
+
+### Halo2
+
+#### Dependencies
+This guide assumes that:
+- You have experience developing a circuit in Halo2.
+- You are using Aligned Layers [fork](https://github.com/yetanotherco/yet-another-halo2-fork) of Privacy & Scaling Explorations [Halo2](https://github.com/privacy-scaling-explorations/halo2) proving system to construct your Halo2 circuit.
+
+#### How to generate a proof
+
+> AlignedLayer can verify proofs of Halo2 circuit. To accomplish this the circuit must be serialized along with the proof, public inputs, and verifier key.
+
+> AligedLayer maintains a Halo2 fork with functions that abstract away the complexity of serializing your Halo2 circuit. Currently AlignedLayer supports verifying Halo2 proofs using the [SHPLONK](https://github.com/privacy-scaling-explorations/halo2/blob/main/halo2_backend/src/poly/kzg/multiopen/shplonk/verifier.rs) and [IPA](https://github.com/privacy-scaling-explorations/halo2/blob/main/halo2_backend/src/poly/ipa/multiopen/verifier.rs#L18) backends for Halo2. Proving and serializing your circuit is exposed for convience via [prove_and_serialize_circuit_kzg()](https://github.com/yetanotherco/yet-another-halo2-fork/blob/feat/serde_constraint_system/halo2_proofs/src/plonk/prover.rs#L213) and [prove_and_serialize_circuit_ipa()](https://github.com/yetanotherco/yet-another-halo2-fork/blob/feat/serde_constraint_system/halo2_proofs/src/plonk/prover.rs#L129).
+
+First, ensure your circuit is defined within a executable in rust and compiles for use in the Halo2 proving system. Then within your executable pass your [circuit](https://github.com/privacy-scaling-explorations/halo2/blob/main/halo2_frontend/src/plonk/circuit.rs#L243), as well as generated [params](https://github.com/privacy-scaling-explorations/halo2/blob/main/halo2_backend/src/poly/commitment.rs), and [pk](https://github.com/privacy-scaling-explorations/halo2/blob/main/halo2_backend/src/plonk.rs) for your proof into [prove_and_serialize_circuit_kzg()](https://github.com/yetanotherco/yet-another-halo2-fork/blob/feat/serde_constraint_system/halo2_proofs/src/plonk/prover.rs#L213) or [prove_and_serialize_circuit_ipa()](https://github.com/yetanotherco/yet-another-halo2-fork/blob/feat/serde_constraint_system/halo2_proofs/src/plonk/prover.rs#L129) depending on which commitment scheme you would like to prove your Halo2 circuit with.
+
+Compile and run your halo2 project to generate a serialized proof:
+```bash
+cargo run --release
+```
+
+Both of the functions above generate a proof based on the provided public inputs, verify that proof with same verifier used on AlignedLayer, and serialize the circuit, provided parameters, proof, and public input to file to be sent to AlignedLayer.
+
+#### How to get the proof verified by AlignedLayer
+
+After generating your serialized proof, you will have three different files within a generated `proof_files` directory within your project:
+- **proof file**: found under `./proof_files/proof.bin` directory, which contains the serialized proof.
+- **parameters file**: found under `./proof_files/params.bin`, which contains the public parameters, verifier key, and serialized circuit description.
+- **public input file**: found under `./proof_files/public_input.bin`, which contains the public inputs passed into the circuit.
+
+Then, to verify your proof on aligned, you can send send these files to the AlignedLayer network by running the following command
+from the `batcher/client` respectively inside the AlignedLayer repository directory:
+
+```bash
+cargo run --release -- \
+  --proving_system <<Halo2IPA>:<Halo2KZG>> \
+  --proof <proof_path> \
+  --public_input <public_input_path> \
+  --vk <params_path> \
+  --conn <<ws://batcher.alignedlayer.com>:<ws://localhost:8080>>
 ```
 
 ## FAQ
