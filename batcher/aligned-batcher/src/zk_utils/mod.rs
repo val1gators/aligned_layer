@@ -3,7 +3,7 @@ use crate::halo2::ipa::verify_halo2_ipa;
 use crate::halo2::kzg::verify_halo2_kzg;
 use crate::sp1::verify_sp1_proof;
 use aligned_batcher_lib::types::{ProvingSystemId, VerificationData};
-use log::{debug, warn};
+use log::{info, warn};
 
 pub(crate) fn verify(verification_data: &VerificationData) -> bool {
     match verification_data.proving_system {
@@ -11,21 +11,21 @@ pub(crate) fn verify(verification_data: &VerificationData) -> bool {
             if let Some(elf) = &verification_data.vm_program_code {
                 return verify_sp1_proof(verification_data.proof.as_slice(), elf.as_slice());
             }
-            warn!("Trying to verify SP1 proof but ELF was not provided. Returning false");
+            warn!("Client Handler: Trying to verify SP1 proof but ELF was not provided. Returning false");
             false
         }
         ProvingSystemId::Halo2KZG => {
             let vk = verification_data
                 .verification_key
                 .as_ref()
-                .expect("Verification key is required");
+                .expect("Client Handler: Verification key is required");
 
             let pub_input = verification_data
                 .pub_input
                 .as_ref()
                 .expect("Public input is required");
             let is_valid = verify_halo2_kzg(&verification_data.proof, pub_input, vk);
-            debug!("Halo2-KZG proof is valid: {}", is_valid);
+            info!("Client Handler: Halo2-KZG proof is valid: {}", is_valid);
             is_valid
         }
         ProvingSystemId::Halo2IPA => {
@@ -39,7 +39,7 @@ pub(crate) fn verify(verification_data: &VerificationData) -> bool {
                 .as_ref()
                 .expect("Public input is required");
             let is_valid = verify_halo2_ipa(&verification_data.proof, pub_input, vk);
-            debug!("Halo2-IPA proof is valid: {}", is_valid);
+            info!("Client Handler: Halo2-IPA proof is valid: {}", is_valid);
             is_valid
         }
         ProvingSystemId::GnarkPlonkBls12_381
@@ -60,7 +60,7 @@ pub(crate) fn verify(verification_data: &VerificationData) -> bool {
                 pub_input,
                 vk,
             );
-            debug!("Gnark proof is valid: {}", is_valid);
+            info!("Client Handler: Gnark proof is valid: {}", is_valid);
             is_valid
         }
     }
