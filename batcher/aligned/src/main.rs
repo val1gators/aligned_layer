@@ -296,6 +296,9 @@ fn verification_data_from_args(args: SubmitArgs) -> Result<VerificationData, Bat
                 args.vm_program_code_file_name,
             )?);
         }
+        ProvingSystemId::Nexus => {
+            verification_key = Some(read_file_option("--vk", args.verification_key_file_name)?);
+        }
         ProvingSystemId::Halo2KZG
         | ProvingSystemId::Halo2IPA
         | ProvingSystemId::GnarkPlonkBls12_381

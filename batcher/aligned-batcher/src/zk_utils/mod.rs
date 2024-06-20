@@ -2,6 +2,7 @@ use crate::gnark::verify_gnark;
 use crate::halo2::ipa::verify_halo2_ipa;
 use crate::halo2::kzg::verify_halo2_kzg;
 use crate::sp1::verify_sp1_proof;
+use crate::nexus::verify_nexus_proof;
 use aligned_batcher_lib::types::{ProvingSystemId, VerificationData};
 use log::{debug, warn};
 
@@ -12,6 +13,13 @@ pub(crate) fn verify(verification_data: &VerificationData) -> bool {
                 return verify_sp1_proof(verification_data.proof.as_slice(), elf.as_slice());
             }
             warn!("Trying to verify SP1 proof but ELF was not provided. Returning false");
+            false
+        }
+        ProvingSystemId::Nexus => {
+            if let Some(params) = &verification_data.verification_key {
+                return verify_nexus_proof(&verification_data.proof, &params);
+            }
+            warn!("Trying to verify Nexus proof but Params not provided. Returning false");
             false
         }
         ProvingSystemId::Halo2KZG => {
