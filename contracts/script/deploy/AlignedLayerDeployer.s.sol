@@ -31,7 +31,7 @@ contract AlignedLayerDeployer is ExistingDeploymentParser {
     ProxyAdmin public alignedLayerProxyAdmin;
     address public alignedLayerOwner;
     address public alignedLayerUpgrader;
-    address public pauser;
+    address public alignedLayerPauser;
     uint256 public initalPausedStatus;
     address public deployer;
 
@@ -42,6 +42,7 @@ contract AlignedLayerDeployer is ExistingDeploymentParser {
     StakeRegistry public stakeRegistry;
     OperatorStateRetriever public operatorStateRetriever;
     ServiceManagerRouter public serviceManagerRouter;
+    PauserRegistry public pauserRegistry;
 
     BLSApkRegistry public apkRegistryImplementation;
     AlignedLayerServiceManager public alignedLayerServiceManagerImplementation;
@@ -86,7 +87,10 @@ contract AlignedLayerDeployer is ExistingDeploymentParser {
             ".permissions.initalPausedStatus"
         );
 
-        pauser = address(eigenLayerPauserReg);
+        alignedLayerPauser = stdJson.readAddress(
+            config_data,
+            ".permissions.pauser"
+        );
 
         deployer = stdJson.readAddress(config_data, ".permissions.deployer");
         require(
@@ -99,6 +103,13 @@ contract AlignedLayerDeployer is ExistingDeploymentParser {
 
         // deploy proxy admin for ability to upgrade proxy contracts
         alignedLayerProxyAdmin = new ProxyAdmin();
+
+        //deploy pauser registry
+        {
+            address[] memory pausers = new address[](1);
+            pausers[0] = alignedLayerPauser;
+            pauserRegistry = new PauserRegistry(pausers, alignedLayerPauser); // (pausers, unpauser)
+        }
 
         //deploy service manager router
         serviceManagerRouter = new ServiceManagerRouter();
@@ -216,7 +227,7 @@ contract AlignedLayerDeployer is ExistingDeploymentParser {
                     alignedLayerOwner,
                     churner,
                     ejector,
-                    IPauserRegistry(pauser),
+                    pauserRegistry,
                     initalPausedStatus,
                     operatorSetParams,
                     minimumStakeForQuourm,
@@ -241,7 +252,9 @@ contract AlignedLayerDeployer is ExistingDeploymentParser {
             address(alignedLayerServiceManagerImplementation),
             abi.encodeWithSelector(
                 AlignedLayerServiceManager.initialize.selector,
-                deployer
+                deployer,
+                pauserRegistry,
+                initalPausedStatus
             )
         );
 
@@ -312,18 +325,27 @@ contract AlignedLayerDeployer is ExistingDeploymentParser {
             config_data,
             ".permissions.upgrader"
         );
+        alignedLayerPauser = stdJson.readAddress(
+            config_data,
+            ".permissions.pauser"
+        );
         initalPausedStatus = stdJson.readUint(
             config_data,
             ".permissions.initalPausedStatus"
         );
-
-        pauser = address(eigenLayerPauserReg);
 
         deployer = stdJson.readAddress(config_data, ".permissions.deployer");
         vm.startPrank(deployer);
 
         // deploy proxy admin for ability to upgrade proxy contracts
         alignedLayerProxyAdmin = new ProxyAdmin();
+
+        //deploy pauser registry
+        {
+            address[] memory pausers = new address[](1);
+            pausers[0] = alignedLayerPauser;
+            pauserRegistry = new PauserRegistry(pausers, alignedLayerPauser); // (pausers, unpauser)
+        }
 
         //deploy service manager router
         serviceManagerRouter = new ServiceManagerRouter();
@@ -441,7 +463,7 @@ contract AlignedLayerDeployer is ExistingDeploymentParser {
                     alignedLayerOwner,
                     churner,
                     ejector,
-                    IPauserRegistry(pauser),
+                    pauserRegistry,
                     initalPausedStatus,
                     operatorSetParams,
                     minimumStakeForQuourm,
@@ -466,7 +488,9 @@ contract AlignedLayerDeployer is ExistingDeploymentParser {
             address(alignedLayerServiceManagerImplementation),
             abi.encodeWithSelector(
                 AlignedLayerServiceManager.initialize.selector,
-                deployer
+                deployer,
+                pauserRegistry,
+                initalPausedStatus
             )
         );
 
@@ -639,7 +663,7 @@ contract AlignedLayerDeployer is ExistingDeploymentParser {
             "registryCoordinator.ejector() != ejector"
         );
         require(
-            registryCoordinator.pauserRegistry() == IPauserRegistry(pauser),
+            registryCoordinator.pauserRegistry() == pauserRegistry,
             "registryCoordinator: pauser registry not set correctly"
         );
         require(
@@ -768,6 +792,11 @@ contract AlignedLayerDeployer is ExistingDeploymentParser {
             "serviceManagerRouter",
             address(serviceManagerRouter)
         );
+        vm.serializeAddress(
+            deployed_addresses,
+            "pauserRegistry",
+            address(pauserRegistry)
+        );
         string memory deployed_addresses_output = vm.serializeAddress(
             deployed_addresses,
             "stakeRegistryImplementation",
@@ -790,6 +819,10 @@ contract AlignedLayerDeployer is ExistingDeploymentParser {
             config_data,
             ".permissions.ejector"
         );
+        address pauserAddress = stdJson.readAddress(
+            config_data,
+            ".permissions.pauser"
+        );
         string memory permissions = "permissions";
         vm.serializeAddress(
             permissions,
@@ -802,7 +835,8 @@ contract AlignedLayerDeployer is ExistingDeploymentParser {
             alignedLayerUpgrader
         );
         vm.serializeAddress(permissions, "alignedLayerChurner", churner);
-        vm.serializeAddress(permissions, "pauserRegistry", pauser);
+        vm.serializeAddress(permissions, "alignedLayerPauser", pauserAddress);
+//        vm.serializeAddress(permissions, "pauserRegistry", pauser);
         string memory permissions_output = vm.serializeAddress(
             permissions,
             "alignedLayerEjector",
