@@ -685,6 +685,26 @@ generate_halo2_ipa_proof:
 	echo "Generating halo2 plonk proof..." && \
 	echo "Generated halo2 plonk proof!"
 
+__MINA_FFI__: ##
+build_mina_macos:
+	@cd operator/mina/lib && cargo build --release
+	@cp operator/mina/lib/target/release/libkimchi_verifier_ffi.dylib operator/mina/lib/libkimchi_verifier.dylib
+
+build_mina_linux:
+	@cd operator/mina/lib && cargo build --release
+	@cp operator/mina/lib/target/release/libkimchi_verifier_ffi.so operator/mina/lib/libkimchi_verifier.so
+
+test_mina_rust_ffi:
+	@echo "Testing Mina Rust FFI source code..."
+	@cd operator/mina/lib && cargo t --release
+
+test_mina_go_bindings_macos: build_mina_macos
+	@echo "Testing Mina Go bindings..."
+	go test ./operator/mina/... -v
+
+test_mina_go_bindings_linux: build_mina_linux
+	@echo "Testing Mina Go bindings..."
+	go test ./operator/mina/... -v
 
 __BUILD_ALL_FFI__:
 
