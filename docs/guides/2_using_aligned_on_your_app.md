@@ -5,7 +5,7 @@ in the [ZKQuiz example](../../examples/zkquiz).
 
 This example shows a sample app that generates a SP1 proof 
 that a user knows the answers to a quiz, then submits the proof 
-to Aligned for verification. 
+to Aligned for verification.
 Finally, it includes a smart contract that verifies that a proof 
 was verified in Aligned and mints an NFT.
 
@@ -14,7 +14,7 @@ was verified in Aligned and mints an NFT.
 ### Step 1 - Write your ZK Proof
 
 Write your ZK proof using any of the proving systems supported by Aligned.
-For this example, we use the SP1 proving system.
+For this example, we use the SP1 proving system. The current SP1 version used in Aligned is v1.0.8-testnet.
 
 You can find the example of the quiz proof [program](../../examples/zkquiz/quiz/program/src/main.rs) 
 as well as the [script](../../examples/zkquiz/quiz/script/src/main.rs) 
@@ -39,7 +39,7 @@ For SP1 you would use the elf of the program as the input file.
 You can find the example of the smart contract that verifies the proof was verified in Aligned
 in the [Quiz Verifier Contract](../../examples/zkquiz/contracts/src/VerifierContract.sol).
 
-Note that the contract has and checks that the verification key commitment is the same as the program elf.
+Note that the contract checks that the verification key commitment is the same as the program elf.
 ```solidity
 require(elfCommitment == provingSystemAuxDataCommitment, "ELF does not match");
 ```
@@ -76,7 +76,7 @@ generate the proof.
 Then, submit the proof to Aligned for verification. 
 This can be done either with the SDK or by using the Aligned CLI.
 You can find examples of how to submit a proof using the cli 
-in the [README_SEND_PROOFS.md](../../README_SEND_PROOFS.md)).
+in the [submitting proofs guide](0_submitting_proofs.md).
 
 The call ZK Quiz uses is:
 ```bash
