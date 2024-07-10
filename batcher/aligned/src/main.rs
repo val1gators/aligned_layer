@@ -489,6 +489,12 @@ fn verification_data_from_args(args: SubmitArgs) -> Result<VerificationData, Sub
                 args.vm_program_code_file_name,
             )?);
         }
+        ProvingSystemId::Jolt => {
+            vm_program_code = Some(read_file_option(
+                "--vm_program",
+                args.vm_program_code_file_name,
+            )?);
+        }
         ProvingSystemId::Halo2KZG
         | ProvingSystemId::Halo2IPA
         | ProvingSystemId::GnarkPlonkBls12_381
